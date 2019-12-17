@@ -78,23 +78,32 @@ FMOD_RESULT F_CALLBACK ReadCallback(FMOD_DSP_STATE* dsp_state, float* inbuffer, 
 	dsp_data* data = (dsp_data*)dsp_state->plugindata;
 
 	for (unsigned int s = 0; s < length; s++) {
-		
 		// Dialog output
 		outbuffer[s] = data->dialog[data->dialog_index];
 		if (data->dialog_index++ == data->dialog_samples) {
 			data->dialog_index = 0;
-			data->breath_index = 0;
+			data->breath_out_index = 0;
 			min_index = markers_in.begin();
 			mout_index = markers_out.begin();
 		}
-		// Check if there's some breath to mix
-		if (data->dialog_index >= *mout_index && data->breath_index < data->breath_samples) {
-			outbuffer[s] = data->breath[data->breath_index];
-			data->breath_index++;
+		// Check if there's some breath out to mix
+		if (data->dialog_index >= *mout_index && data->breath_out_index < breath_samples) {
+			outbuffer[s] = data->breath[data->breath_out_index];
+			data->breath_out_index++;
 		// Breath is over
-		} else if (data->breath_index == data->breath_samples) {
+		} else if (data->breath_out_index == breath_samples) {
 			mout_index++;
-			data->breath_index = 0;
+			data->breath_out_index = 0;
+		}
+		// Check if there's some breath in to mix
+		if (data->dialog_index >= *min_index && data->breath_in_index < breath_samples) {
+			outbuffer[s] = data->dialog[data->dialog_index] + data->breath[data->breath_in_index];
+			data->breath_in_index++;
+		// Breath is over
+		}
+		else if (data->breath_in_index == breath_samples) {
+			min_index++;
+			data->breath_in_index = 0;
 		}
 	}
 
@@ -150,6 +159,8 @@ FMOD_RESULT F_CALLBACK SetParamDataCallback(FMOD_DSP_STATE* dsp_state, int index
 			data->dialog_thr[s] = fabs(data->dialog[s]) > data->threshold ? 1 : 0;
 
 		//2. Find the markers for the dialog in/out using a window
+		markers_in.clear();
+		markers_out.clear();
 		for (unsigned int s = 1; s < data->dialog_samples - data->dialog_find_window; s++) {
 			bool found = 0;
 			//Comes from dialog and now it's silence
@@ -169,7 +180,7 @@ FMOD_RESULT F_CALLBACK SetParamDataCallback(FMOD_DSP_STATE* dsp_state, int index
 			}
 			//Comes from silence and now it's dialog
 			else if (data->dialog_thr[s] == 1 && data->dialog_thr[s - 1] == 0) {
-				int inPivot = s - data->breath_samples;
+				int inPivot = s - breath_samples;
 				//Check if the breath fits at the begining of the audio
 				if (inPivot >= 0)	//TODO: Check for overlapping in and out breaths
 					markers_in.push_back(inPivot);
@@ -190,8 +201,9 @@ FMOD_RESULT F_CALLBACK SetParamDataCallback(FMOD_DSP_STATE* dsp_state, int index
 			return FMOD_ERR_MEMORY;
 
 		data->breath = (float*)value;
-		data->breath_index = 0;	// Initialize index pointer
-		data->breath_samples = length / 4; // Number of samples are floats
+		data->breath_out_index = 0;	// Initialize index pointer
+		data->breath_in_index = 0;	// Initialize index pointer
+		breath_samples = length / 4; // Number of samples are floats
 
 		return FMOD_OK;
 	}
