@@ -76,17 +76,7 @@ FMOD_RESULT F_CALLBACK CreateCallback(FMOD_DSP_STATE* dsp_state)
 FMOD_RESULT F_CALLBACK ReadCallback(FMOD_DSP_STATE* dsp_state, float* inbuffer, float* outbuffer, unsigned int length, int inchannels, int* outchannels)
 {
 	dsp_data* data = (dsp_data*)dsp_state->plugindata;
-	for (unsigned int s = 0; s < length; s++) {
-		outbuffer[s] = data->dialog[data->dialog_index]*0.5f + data->breath[data->breath_index]*0.5f;
-		if (data->dialog_index++ == data->dialog_samples) {
-			data->dialog_index = 0;
-		}
-		if (data->breath_index++ == data->breath_samples) {
-			data->breath_index = 0;
-		}
-	}
 
-	/*
 	for (unsigned int s = 0; s < length; s++) {
 		
 		// Dialog output
@@ -107,7 +97,7 @@ FMOD_RESULT F_CALLBACK ReadCallback(FMOD_DSP_STATE* dsp_state, float* inbuffer, 
 			data->breath_index = 0;
 		}
 	}
-	*/
+
 	return FMOD_OK;
 }
 
