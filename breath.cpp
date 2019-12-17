@@ -80,18 +80,12 @@ FMOD_RESULT F_CALLBACK ReadCallback(FMOD_DSP_STATE* dsp_state, float* inbuffer, 
 	for (unsigned int s = 0; s < length; s++) {
 		// Dialog output
 		outbuffer[s] = data->dialog[data->dialog_index];
-		if (data->dialog_index++ == data->dialog_samples) {
-			data->dialog_index = 0;
-			data->breath_out_index = 0;
-			min_index = markers_in.begin();
-			mout_index = markers_out.begin();
-		}
 		// Check if there's some breath out to mix
 		if (data->dialog_index >= *mout_index && data->breath_out_index < breath_samples) {
 			outbuffer[s] = data->breath[data->breath_out_index];
 			data->breath_out_index++;
 		// Breath is over
-		} else if (data->breath_out_index == breath_samples) {
+		} else if (data->breath_out_index == breath_samples && data->dialog_index < markers_out.back()) {
 			mout_index++;
 			data->breath_out_index = 0;
 		}
@@ -100,10 +94,16 @@ FMOD_RESULT F_CALLBACK ReadCallback(FMOD_DSP_STATE* dsp_state, float* inbuffer, 
 			outbuffer[s] = data->dialog[data->dialog_index] + data->breath[data->breath_in_index];
 			data->breath_in_index++;
 		// Breath is over
-		}
-		else if (data->breath_in_index == breath_samples) {
+		} else if (data->breath_in_index == breath_samples && data->dialog_index < markers_in.back()) {
 			min_index++;
 			data->breath_in_index = 0;
+		}
+		// Check if dialog has reached the end
+		if (data->dialog_index++ == data->dialog_samples) {
+			data->dialog_index = 0;
+			data->breath_out_index = 0;
+			min_index = markers_in.begin();
+			mout_index = markers_out.begin();
 		}
 	}
 
