@@ -5,6 +5,7 @@ Matias Lizana García 2019
 
 #define _CRT_SECURE_NO_WARNINGS
 #include "breath.hpp"
+#include <time.h>       /* time */
 
 /* DLL GENERATION */
 
@@ -69,6 +70,8 @@ FMOD_RESULT F_CALLBACK CreateCallback(FMOD_DSP_STATE* dsp_state)
 
 	data->threshold = 0.01f;
 	data->dialogFindWindow = 10000;
+	breathSamples = 24000;	//Breath length in samples (500 ms at 48000Khz)
+	srand(time(0));
 
 	return FMOD_OK;
 }
@@ -77,11 +80,22 @@ FMOD_RESULT F_CALLBACK ReadCallback(FMOD_DSP_STATE* dsp_state, float* inbuffer, 
 {
 	dsp_data* data = (dsp_data*)dsp_state->plugindata;
 
+	for (unsigned int s = 0; s < length; s++)	{
+		outbuffer[s] = (data->breathIn[data->breathInIndex])[data->breathInReadIndex++];
+		if (data->breathInReadIndex == breathSamples) {
+			data->breathInReadIndex = 0;
+			data->breathInIndex = rand() % data->breathInSize - 1;
+			while(data->breathInIndex > data->breathInSize - 1)
+				data->breathInIndex = rand() % data->breathInSize - 1;
+		}
+	}
+
+	/*
 	for (unsigned int s = 0; s < length; s++) {
 		// Dialog output
 		outbuffer[s] = data->dialog[data->dialogIndex];
 		// Check if there's some breath out to mix
-		if (data->dialogIndex >= *mOutIndex && data->breathOutIndex < breathSamples) {
+		if (data->dialogIndex >= *mOutIndex) { //&& data->breathOutIndex < breathSamples) {
 			outbuffer[s] = data->breathOut[data->breathOutIndex];
 			data->breathOutIndex++;
 		// Breath is over
@@ -90,13 +104,13 @@ FMOD_RESULT F_CALLBACK ReadCallback(FMOD_DSP_STATE* dsp_state, float* inbuffer, 
 			data->breathOutIndex = 0;
 		}
 		// Check if there's some breath in to mix
-		if (data->dialogIndex >= *mInIndex && data->breathInIndex < breathSamples) {
-			outbuffer[s] = data->dialog[data->dialogIndex] + data->breathIn[data->breathInIndex];
-			data->breathInIndex++;
+		if (data->dialogIndex >= *mInIndex) { //&& data->breathOutIndex < breathSamples) {
+			outbuffer[s] = data->dialog[data->dialogIndex] + data->breathIn[data->breathInReadIndex];
+			data->breathInReadIndex++;
 		// Breath is over
 		} else if (data->breathInIndex == breathSamples && data->dialogIndex < markersIn.back()) {
 			mInIndex++;
-			data->breathInIndex = 0;
+			data->breathInReadIndex = 0;
 		}
 		// Check if dialog has reached the end
 		if (data->dialogIndex++ == data->dialogSamples) {
@@ -106,6 +120,7 @@ FMOD_RESULT F_CALLBACK ReadCallback(FMOD_DSP_STATE* dsp_state, float* inbuffer, 
 			mOutIndex = markersOut.begin();
 		}
 	}
+	*/
 
 	return FMOD_OK;
 }
@@ -177,7 +192,7 @@ FMOD_RESULT F_CALLBACK SetParamDataCallback(FMOD_DSP_STATE* dsp_state, int index
 			}
 			//Comes from silence and now it's dialog
 			else if (data->dialogThr[s] == 1 && data->dialogThr[s - 1] == 0) {
-				int inPivot = s - breathSamples;
+				int inPivot = s; // TODO: minus breath length;
 				//Check if the breath fits at the begining of the audio
 				if (inPivot >= 0)	//TODO: Check for overlapping in and out breaths
 					markersIn.push_back(inPivot);
@@ -192,11 +207,30 @@ FMOD_RESULT F_CALLBACK SetParamDataCallback(FMOD_DSP_STATE* dsp_state, int index
 
 	// BREATH IN
 	if (index == 1)
-	{
-		data->breathIn = (float*)value;
-		data->breathInIndex = 0;	// Initialize index pointer
-		breathSamples = length / 4; // Number of samples are floats
+	{	
+		for(unsigned int i = 0; i < length / 4; i+= breathSamples)
+			data->breathIn.push_back(&((float*)value)[i]);
+		data->breathInReadIndex = 0;	// Initialize read index pointer
+		data->breathInIndex = 0;		// Initialize breath index pointer
+		data->breathInSize = (unsigned int) data->breathIn.size();
+		return FMOD_OK;
+	}
 
+	// BREATH OUT
+	if (index == 2)
+	{
+		for (unsigned int i = 0; i < length / 4; i += breathSamples)
+			data->breathOut.push_back(&((float*)value)[i]);
+		data->breathOutReadIndex = 0;	// Initialize read index pointer
+		return FMOD_OK;
+	}
+
+	// BREATH HIT
+	if (index == 3)
+	{
+		for (unsigned int i = 0; i < length / 4; i += breathSamples)
+			data->breathHit.push_back(&((float*)value)[i]);
+		data->breathHitReadIndex = 0;	// Initialize read index pointer
 		return FMOD_OK;
 	}
 

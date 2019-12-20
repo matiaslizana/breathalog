@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <list>
+#include <vector>
 
 /* DLL Generation */
 extern "C" {
@@ -29,23 +30,27 @@ typedef struct dsp
 {
 	//Params
 	float* dialog;							// Dialog audio
-	float* breathIn;						// Breath in audios
-	float* breathOut;						// Breath out audios
-	float* breathHit;						// Breath hit audios
+	std::vector<float*> breathIn;				// Breath in audios
+	std::list<float*> breathOut;			// Breath out audios
+	std::list<float*> breathHit;			// Breath hit audios
 
 	//Variables
 	float* dialogThr;						// Buffer to store dialog thresholded
 	unsigned int dialogIndex;				// Index to read dialog audio
 	unsigned int dialogSamples;				// Length of the dialog audio
-	unsigned int breathOutIndex;			// Index to read breath out audio
-	unsigned int breathInIndex;				// Index to read breath in audio
-	unsigned int breathHitIndex;			// Index to read breath in audio
+	unsigned int breathOutIndex;			// Index to point to a breath out audio
+	unsigned int breathOutReadIndex;		// Index to read current breath out audio
+	unsigned int breathInIndex;				// Index to point to a breath in audio
+	unsigned int breathInReadIndex;			// Index to read current breath in audio
+	unsigned int breathInSize;				// Number of breath in audios
+	unsigned int breathHitIndex;			// Index to point to a breath hit audio
+	unsigned int breathHitReadIndex;		// Index to read current breath hit audio
 	float breathMidFadeTime;				// Fade time to mix dialog with breath
 	float dialogFindWindow;					// Window time to calculate real dialog
 	float threshold;						// Threshold to calculate dialog volume
 } dsp_data;
 
-unsigned int breathSamples;					// Length of the breath audio
+unsigned int breathSamples;					// Breath length in samples 
 std::list<unsigned int> markersOut;			// List of breath out markers
 std::list<unsigned int> markersIn;			// List of breath in markers
 std::list<unsigned int>::iterator mOutIndex;// Index to track which marker out to search for
