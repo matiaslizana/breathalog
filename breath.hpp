@@ -30,9 +30,9 @@ typedef struct dsp
 {
 	//Params
 	float* dialog;							// Dialog audio
-	std::vector<float*> breathIn;				// Breath in audios
-	std::list<float*> breathOut;			// Breath out audios
-	std::list<float*> breathHit;			// Breath hit audios
+	std::vector<float*> breathIn;			// Breath in audios
+	std::vector<float*> breathOut;			// Breath out audios
+	std::vector<float*> breathHit;			// Breath hit audios
 
 	//Variables
 	float* dialogThr;						// Buffer to store dialog thresholded
@@ -42,7 +42,6 @@ typedef struct dsp
 	unsigned int breathOutReadIndex;		// Index to read current breath out audio
 	unsigned int breathInIndex;				// Index to point to a breath in audio
 	unsigned int breathInReadIndex;			// Index to read current breath in audio
-	unsigned int breathInSize;				// Number of breath in audios
 	unsigned int breathHitIndex;			// Index to point to a breath hit audio
 	unsigned int breathHitReadIndex;		// Index to read current breath hit audio
 	float breathMidFadeTime;				// Fade time to mix dialog with breath

@@ -79,14 +79,24 @@ FMOD_RESULT F_CALLBACK CreateCallback(FMOD_DSP_STATE* dsp_state)
 FMOD_RESULT F_CALLBACK ReadCallback(FMOD_DSP_STATE* dsp_state, float* inbuffer, float* outbuffer, unsigned int length, int inchannels, int* outchannels)
 {
 	dsp_data* data = (dsp_data*)dsp_state->plugindata;
-
+	/*
 	for (unsigned int s = 0; s < length; s++)	{
 		outbuffer[s] = (data->breathIn[data->breathInIndex])[data->breathInReadIndex++];
 		if (data->breathInReadIndex == breathSamples) {
 			data->breathInReadIndex = 0;
-			data->breathInIndex = rand() % data->breathInSize - 1;
-			while(data->breathInIndex > data->breathInSize - 1)
-				data->breathInIndex = rand() % data->breathInSize - 1;
+			data->breathInIndex = rand() % data->breathIn.size() - 1;
+			while(data->breathInIndex > data->breathIn.size() - 1)
+				data->breathInIndex = rand() % data->breathIn.size() - 1;
+		}
+	}
+	*/
+	for (unsigned int s = 0; s < length; s++) {
+		outbuffer[s] = (data->breathOut[data->breathOutIndex])[data->breathOutReadIndex++];
+		if (data->breathOutReadIndex == breathSamples) {
+			data->breathOutReadIndex = 0;
+			data->breathOutIndex = rand() % data->breathOut.size() - 1;
+			while (data->breathOutIndex > data->breathOut.size() - 1)
+				data->breathOutIndex = rand() % data->breathOut.size() - 1;
 		}
 	}
 
@@ -212,7 +222,6 @@ FMOD_RESULT F_CALLBACK SetParamDataCallback(FMOD_DSP_STATE* dsp_state, int index
 			data->breathIn.push_back(&((float*)value)[i]);
 		data->breathInReadIndex = 0;	// Initialize read index pointer
 		data->breathInIndex = 0;		// Initialize breath index pointer
-		data->breathInSize = (unsigned int) data->breathIn.size();
 		return FMOD_OK;
 	}
 
@@ -222,6 +231,7 @@ FMOD_RESULT F_CALLBACK SetParamDataCallback(FMOD_DSP_STATE* dsp_state, int index
 		for (unsigned int i = 0; i < length / 4; i += breathSamples)
 			data->breathOut.push_back(&((float*)value)[i]);
 		data->breathOutReadIndex = 0;	// Initialize read index pointer
+		data->breathOutIndex = 0;		// Initialize breath index pointer
 		return FMOD_OK;
 	}
 
@@ -231,6 +241,7 @@ FMOD_RESULT F_CALLBACK SetParamDataCallback(FMOD_DSP_STATE* dsp_state, int index
 		for (unsigned int i = 0; i < length / 4; i += breathSamples)
 			data->breathHit.push_back(&((float*)value)[i]);
 		data->breathHitReadIndex = 0;	// Initialize read index pointer
+		data->breathHitIndex = 0;		// Initialize breath index pointer
 		return FMOD_OK;
 	}
 
