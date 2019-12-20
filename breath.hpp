@@ -21,34 +21,35 @@ FMOD_RESULT F_CALLBACK GetParamFloatCallback(FMOD_DSP_STATE* dsp_state, int inde
 void CalculatePreprocessBuffer();
 
 static FMOD_DSP_PARAMETER_DESC dialog;
-static FMOD_DSP_PARAMETER_DESC breath;
-static FMOD_DSP_PARAMETER_DESC frequency;
-static FMOD_DSP_PARAMETER_DESC distance;
+static FMOD_DSP_PARAMETER_DESC breathIn;
+static FMOD_DSP_PARAMETER_DESC breathOut;
+static FMOD_DSP_PARAMETER_DESC breathHit;
 
 typedef struct dsp
 {
 	//Params
 	float* dialog;							// Dialog audio
-	float* breath;							// Breath audio TODO: Fill with an array of breaths (in, out, mid)
-	float freq;								// Frequency of breathing mid
-	float distance;							// Distance between another breaths with mid
+	float* breathIn;						// Breath in audios
+	float* breathOut;						// Breath out audios
+	float* breathHit;						// Breath hit audios
 
 	//Variables
-	float* dialog_thr;						// Buffer to store dialog thresholded
-	unsigned int dialog_index;				// Index to read dialog audio
-	unsigned int dialog_samples;			// Length of the dialog audio
-	unsigned int breath_out_index;			// Index to read breath out audio
-	unsigned int breath_in_index;			// Index to read breath in audio
-	float breath_mid_fade_time;				// Fade time to mix dialog with breath
-	float dialog_find_window;				// Window time to calculate real dialog
+	float* dialogThr;						// Buffer to store dialog thresholded
+	unsigned int dialogIndex;				// Index to read dialog audio
+	unsigned int dialogSamples;				// Length of the dialog audio
+	unsigned int breathOutIndex;			// Index to read breath out audio
+	unsigned int breathInIndex;				// Index to read breath in audio
+	unsigned int breathHitIndex;			// Index to read breath in audio
+	float breathMidFadeTime;				// Fade time to mix dialog with breath
+	float dialogFindWindow;					// Window time to calculate real dialog
 	float threshold;						// Threshold to calculate dialog volume
 } dsp_data;
 
-unsigned int breath_samples;					// Length of the breath audio
-std::list<unsigned int> markers_out;			// List of breath out markers
-std::list<unsigned int> markers_in;				// List of breath in markers
-std::list<unsigned int>::iterator mout_index;	// Index to track which marker out to search for
-std::list<unsigned int>::iterator min_index;	// Index to track which marker in to search for
+unsigned int breathSamples;					// Length of the breath audio
+std::list<unsigned int> markersOut;			// List of breath out markers
+std::list<unsigned int> markersIn;			// List of breath in markers
+std::list<unsigned int>::iterator mOutIndex;// Index to track which marker out to search for
+std::list<unsigned int>::iterator mInIndex;	// Index to track which marker in to search for
 
 extern FMOD_DSP_PARAMETER_DESC* paramdesc[INTRF_NUM_PARAMETERS];
 
