@@ -36,6 +36,9 @@ typedef struct dsp
 
 	//Variables
 	float* dialogThr;						// Buffer to store dialog thresholded
+	float* breathInAudio;
+	float* breathOutAudio;
+	float* breathHitAudio;
 	unsigned int dialogIndex;				// Index to read dialog audio
 	unsigned int dialogSamples;				// Length of the dialog audio
 	unsigned int breathOutIndex;			// Index to point to a breath out audio
@@ -52,8 +55,8 @@ typedef struct dsp
 unsigned int breathSamples;					// Breath length in samples 
 std::list<unsigned int> markersOut;			// List of breath out markers
 std::list<unsigned int> markersIn;			// List of breath in markers
-std::list<unsigned int>::iterator mOutIndex;// Index to track which marker out to search for
-std::list<unsigned int>::iterator mInIndex;	// Index to track which marker in to search for
+std::list<unsigned int>::iterator markerOutIndex;// Index to track which marker out to search for
+std::list<unsigned int>::iterator markerInIndex;	// Index to track which marker in to search for
 
 extern FMOD_DSP_PARAMETER_DESC* paramdesc[INTRF_NUM_PARAMETERS];
 
