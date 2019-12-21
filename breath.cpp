@@ -71,7 +71,7 @@ FMOD_RESULT F_CALLBACK CreateCallback(FMOD_DSP_STATE* dsp_state)
 	data->threshold = 0.001f;
 	data->dialogFindWindow = 15000;
 	breathSamples = 24000;	//Breath length in samples (500 ms at 48000Khz)
-	srand(time(0));
+	srand((unsigned int) time(0));
 
 	return FMOD_OK;
 }
@@ -172,7 +172,7 @@ FMOD_RESULT F_CALLBACK SetParamDataCallback(FMOD_DSP_STATE* dsp_state, int index
 
 		//1. We store the thresholded audio, to know where to discriminate values for a dialog
 		for (unsigned int s = 0; s < data->dialogSamples; s++)
-			data->dialogThr[s] = fabs(data->dialog[s]) > data->threshold ? 1 : 0;
+			data->dialogThr[s] = fabs(data->dialog[s]) > data->threshold ? 1.0f : 0.0f;
 
 		//2. Find the markers for the dialog in/out using a window
 		markersIn.clear();
