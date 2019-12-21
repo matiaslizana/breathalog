@@ -50,6 +50,8 @@ typedef struct dsp
 	float breathMidFadeTime;				// Fade time to mix dialog with breath
 	float dialogFindWindow;					// Window time to calculate real dialog
 	float threshold;						// Threshold to calculate dialog volume
+	unsigned int breathFadeTime;			// Time to fade breath with dialog
+	bool breathing;							// Character is breathing
 } dsp_data;
 
 unsigned int breathSamples;					// Breath length in samples 
