@@ -4,13 +4,15 @@
 #include <math.h>
 #include <list>
 #include <vector>
+#include <time.h>
+#include <algorithm>
 
 /* DLL Generation */
 extern "C" {
 	F_EXPORT FMOD_DSP_DESCRIPTION* F_CALL FMODGetDSPDescription();
 }
 
-#define INTRF_NUM_PARAMETERS 4
+#define INTRF_NUM_PARAMETERS 7
 
 FMOD_RESULT F_CALLBACK ReadCallback(FMOD_DSP_STATE* dsp_state, float* inbuffer, float* outbuffer, unsigned int length, int inchannels, int* outchannels);
 FMOD_RESULT F_CALLBACK CreateCallback(FMOD_DSP_STATE* dsp_state);
@@ -18,13 +20,16 @@ FMOD_RESULT F_CALLBACK ReleaseCallback(FMOD_DSP_STATE* dsp_state);
 FMOD_RESULT F_CALLBACK SetParamDataCallback(FMOD_DSP_STATE* dsp_state, int index, void* value, unsigned int length);
 FMOD_RESULT F_CALLBACK SetParamFloatCallback(FMOD_DSP_STATE* dsp_state, int index, float value);
 FMOD_RESULT F_CALLBACK GetParamFloatCallback(FMOD_DSP_STATE* dsp_state, int index, float* value, char* valstr);
-
-void CalculatePreprocessBuffer();
+FMOD_RESULT F_CALLBACK SetParamIntCallback(FMOD_DSP_STATE* dsp_state, int index, int value);
+FMOD_RESULT F_CALLBACK GetParamIntCallback(FMOD_DSP_STATE* dsp_state, int index, int* value, char* valstr);
 
 static FMOD_DSP_PARAMETER_DESC dialog;
 static FMOD_DSP_PARAMETER_DESC breathIn;
 static FMOD_DSP_PARAMETER_DESC breathOut;
 static FMOD_DSP_PARAMETER_DESC breathHit;
+static FMOD_DSP_PARAMETER_DESC threshold;
+static FMOD_DSP_PARAMETER_DESC dialogWindow;
+static FMOD_DSP_PARAMETER_DESC breathFadeTime;
 
 typedef struct dsp
 {
@@ -33,6 +38,9 @@ typedef struct dsp
 	std::vector<float*> breathIn;			// Breath in audios
 	std::vector<float*> breathOut;			// Breath out audios
 	std::vector<float*> breathHit;			// Breath hit audios
+	float threshold;						// Threshold to calculate dialog volume
+	unsigned int dialogWindow;			// Window time to calculate real dialog
+	unsigned int breathFadeTime;			// Time to fade breath with dialog
 
 	//Variables
 	float* dialogThr;						// Buffer to store dialog thresholded
@@ -48,13 +56,10 @@ typedef struct dsp
 	unsigned int breathHitIndex;			// Index to point to a breath hit audio
 	unsigned int breathHitReadIndex;		// Index to read current breath hit audio
 	float breathMidFadeTime;				// Fade time to mix dialog with breath
-	float dialogFindWindow;					// Window time to calculate real dialog
-	float threshold;						// Threshold to calculate dialog volume
-	unsigned int breathFadeTime;			// Time to fade breath with dialog
 	bool breathing;							// Character is breathing
+	float breathSamples;					// 
 } dsp_data;
 
-unsigned int breathSamples;					// Breath length in samples 
 std::list<unsigned int> markersOut;			// List of breath out markers
 std::list<unsigned int> markersIn;			// List of breath in markers
 std::list<unsigned int>::iterator markerOutIndex;// Index to track which marker out to search for
