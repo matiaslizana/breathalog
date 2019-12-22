@@ -4,6 +4,8 @@
 #include <math.h>
 #include <list>
 #include <vector>
+#include <time.h>
+#include <algorithm>
 
 /* DLL Generation */
 extern "C" {
@@ -50,9 +52,11 @@ typedef struct dsp
 	float breathMidFadeTime;				// Fade time to mix dialog with breath
 	float dialogFindWindow;					// Window time to calculate real dialog
 	float threshold;						// Threshold to calculate dialog volume
+	bool breathingIn;						// To know if it's breathing in (priority)
 } dsp_data;
 
-unsigned int breathSamples;					// Breath length in samples 
+unsigned int breathOutSamples;				// Breath out length in samples 
+unsigned int breathInSamples;				// Breath in length in samples 
 std::list<unsigned int> markersOut;			// List of breath out markers
 std::list<unsigned int> markersIn;			// List of breath in markers
 std::list<unsigned int>::iterator markerOutIndex;// Index to track which marker out to search for
