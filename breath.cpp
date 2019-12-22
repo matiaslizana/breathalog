@@ -69,6 +69,7 @@ FMOD_RESULT F_CALLBACK CreateCallback(FMOD_DSP_STATE* dsp_state)
 
 	data->threshold = 0.001f;
 	data->dialogFindWindow = 15000;
+	data->breathFadeCounter = 0;
 	breathOutSamples = 24000;	//Breath out length in samples (500 ms at 48000Khz)
 	breathInSamples = 24000;	//Breath in length in samples (500 ms at 48000Khz)
 	srand((unsigned int) time(0));
@@ -89,11 +90,18 @@ FMOD_RESULT F_CALLBACK ReadCallback(FMOD_DSP_STATE* dsp_state, float* inbuffer, 
 		if (data->dialogIndex >= *markerOutIndex && data->breathOutReadIndex < breathOutSamples) {
 			if(!data->breathingIn)
 				outbuffer[s]+= (data->breathOut[data->breathOutIndex])[data->breathOutReadIndex];
+			else {
+				unsigned int min = std::min(data->breathFadeCounter, (unsigned int) 4000);
+				float fadeAmount = (float)min / 4000;
+				outbuffer[s]+= (data->breathOut[data->breathOutIndex])[data->breathOutReadIndex] * (1.0f - fadeAmount);
+				data->breathFadeCounter++;
+			}
 			data->breathOutReadIndex++;
 		// Breath OUT is over
 		} else if (data->breathOutReadIndex == breathOutSamples && data->dialogIndex < markersOut.back()) {
 			markerOutIndex++;
 			data->breathOutReadIndex = 0;
+			data->breathFadeCounter = 0;
 			data->breathOutIndex = rand() % data->breathOut.size() - 1;
 			while (data->breathOutIndex > data->breathOut.size() - 1)
 				data->breathOutIndex = rand() % data->breathOut.size() - 1;
