@@ -57,7 +57,10 @@ typedef struct dsp
 	unsigned int breathHitReadIndex;		// Index to read current breath hit audio
 	float breathMidFadeTime;				// Fade time to mix dialog with breath
 	bool breathing;							// Character is breathing
-	float breathSamples;					// 
+	unsigned int breathSamples;					// Breath samples window length
+	std::vector<unsigned int> breathInLengths;	// Breath in audios length
+	std::vector<unsigned int> breathOutLengths;	// Breath out audios length
+
 } dsp_data;
 
 std::list<unsigned int> markersOut;			// List of breath out markers
