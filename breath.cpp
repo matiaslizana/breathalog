@@ -76,6 +76,7 @@ FMOD_RESULT F_CALLBACK CreateCallback(FMOD_DSP_STATE* dsp_state)
 	breathInSamples = 24000;	//Breath in length in samples (500 ms at 48000Khz)
 	breathFreqSamples = 24000;	//Breath freq length in samples (500 ms at 48000Khz)
 	data->breathFrequency = 96000; //Breath frequency param init
+	data->breathingDistance = 48000;
 	srand((unsigned int) time(0));
 
 	return FMOD_OK;
@@ -93,7 +94,7 @@ FMOD_RESULT F_CALLBACK ReadCallback(FMOD_DSP_STATE* dsp_state, float* inbuffer, 
 		data->breathFreqCountIndex++;
 
 		// Mix Breath OUT
-		if (data->dialogIndex >= *markerOutIndex && data->breathOutReadIndex < breathOutSamples) {
+		if (data->dialogIndex >= markersOut[markerOutIndex] && data->breathOutReadIndex < breathOutSamples) {
 			if(!data->breathingIn)
 				outbuffer[s]+= (data->breathOutAudios[data->breathOutIndex])[data->breathOutReadIndex];
 			else {
@@ -114,7 +115,7 @@ FMOD_RESULT F_CALLBACK ReadCallback(FMOD_DSP_STATE* dsp_state, float* inbuffer, 
 		}
 		
 		// Mix Breath IN
-		if (data->dialogIndex >= *markerInIndex && data->breathInReadIndex < breathInSamples) {
+		if (data->dialogIndex >= markersIn[markerInIndex] && data->breathInReadIndex < breathInSamples) {
  			data->breathingIn = true;
 			// Starts fade begins dialog
 			unsigned int fadeMax = breathInSamples / 2;
@@ -137,7 +138,15 @@ FMOD_RESULT F_CALLBACK ReadCallback(FMOD_DSP_STATE* dsp_state, float* inbuffer, 
 		}
 
 		// Mix Breath FREQ
-		if (data->breathFreqCountIndex > f) {
+		if (data->breathFreqCountIndex == f) {
+			if ((unsigned int) std::abs((int)data->dialogIndex - (int)markersIn[markerInIndex]) > data->breathingDistance &&
+				(unsigned int) std::abs((int)data->dialogIndex - (int)markersOut[markerOutIndex]) > data->breathingDistance &&
+				(markerInIndex > 0 && (unsigned int) std::abs((int)data->dialogIndex - (int)markersIn[markerInIndex - 1]) > data->breathingDistance) &&
+				(markerOutIndex > 0 && (unsigned int) std::abs((int)data->dialogIndex - (int)markersOut[markerOutIndex - 1]) > data->breathingDistance)) {
+				data->breathingFreq = true;
+			}
+		}
+		if (data->breathingFreq && data->breathFreqCountIndex > f) {
 			outbuffer[s] = (data->breathFreqAudios[data->breathFreqIndex])[data->breathFreqReadIndex++];
 			// Reaches the end of the breath and selects a new one
 			if (data->breathFreqCountIndex >= f + breathFreqSamples) {
@@ -156,8 +165,8 @@ FMOD_RESULT F_CALLBACK ReadCallback(FMOD_DSP_STATE* dsp_state, float* inbuffer, 
 			data->breathOutReadIndex = 0;
 			data->breathInIndex = 0;
 			data->breathInReadIndex = 0;
-			markerInIndex = markersIn.begin();
-			markerOutIndex = markersOut.begin();
+			markerInIndex = 0;
+			markerOutIndex = 0;
 		}
 	}
 
@@ -166,27 +175,25 @@ FMOD_RESULT F_CALLBACK ReadCallback(FMOD_DSP_STATE* dsp_state, float* inbuffer, 
 
 FMOD_RESULT F_CALLBACK ReleaseCallback(FMOD_DSP_STATE* dsp_state)
 {
-	/*
 	if (dsp_state->plugindata)
 	{
 		dsp_data* data = (dsp_data*)dsp_state->plugindata;
 
-		if (data->buffer)
-			free(data->buffer);
+		if (data->dialogThr)
+			free(data->dialogThr);
 
-		if (data->processed_buffer)
-			free(data->processed_buffer);
+		if (data->breathInAudio)
+			free(data->breathInAudio);
 
-		if (data->markers_in)
-			free(data->markers_in);
+		if (data->breathOutAudio)
+			free(data->breathOutAudio);
 
-		if (data->markers_out)
-			free(data->markers_out);
+		if (data->breathFreqAudio)
+			free(data->breathFreqAudio);
 
 		free(data);
 	}
 
-	*/
 	return FMOD_OK;
 }
 
@@ -243,8 +250,8 @@ FMOD_RESULT F_CALLBACK SetParamDataCallback(FMOD_DSP_STATE* dsp_state, int index
 			}
 		}
 
-		markerInIndex = markersIn.begin();
-		markerOutIndex = markersOut.begin();
+		markerInIndex = 0;
+		markerOutIndex = 0;
 
 		return FMOD_OK;
 

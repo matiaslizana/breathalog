@@ -54,15 +54,17 @@ typedef struct dsp
 	float threshold;						// Threshold to calculate dialog volume
 	bool breathingIn;						// To know if it's breathing in (priority)
 	unsigned int breathFadeCounter;			// To control the fade between out and in breaths
+	bool breathingFreq;						// To know if it's breathing freq
+	unsigned int breathingDistance;			// Space between freq breaths and in out breaths
 } dsp_data;
 
 unsigned int breathOutSamples;				// Breath out length in samples 
 unsigned int breathInSamples;				// Breath in length in samples 
 unsigned int breathFreqSamples;				// Breath freq length in samples 
-std::list<unsigned int> markersOut;			// List of breath out markers
-std::list<unsigned int> markersIn;			// List of breath in markers
-std::list<unsigned int>::iterator markerOutIndex;// Index to track which marker out to search for
-std::list<unsigned int>::iterator markerInIndex;	// Index to track which marker in to search for
+std::vector<unsigned int> markersOut;		// List of breath out markers
+std::vector<unsigned int> markersIn;		// List of breath in markers
+unsigned int markerOutIndex;				// Index to track which marker out to search for
+unsigned int markerInIndex;					// Index to track which marker in to search for
 
 extern FMOD_DSP_PARAMETER_DESC* paramdesc[INTRF_NUM_PARAMETERS];
 
